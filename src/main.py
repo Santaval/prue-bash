@@ -1,3 +1,5 @@
+"""Main file to run the program."""
+
 import os
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -9,6 +11,8 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 
 def test_connection():
+    """function to test supabase conection."""
+
     # 1. Init client
     supabase: Client = create_client(url, key)
     print("Supabase client initialized correctly")
