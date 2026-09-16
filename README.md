@@ -11,8 +11,13 @@ This is a solution integrating UI, API, and a Machine Learning model using Postg
 - Katherine Acosta — B70047
 - Aldo Cascante — C21988
 
-## Project Objective
+## Project Objectives
 
+- Develop a software project that includes a robust testing plan closely aligned with the business domain.
+- Create tests to validate the system's most granular aspects.
+- Create tests to validate workflows that reflect business logic.
+- Establish a clear plan to ensure the optimal division and utilization of available resources.
+- Design test cases that account for anomalous inputs to ensure that workflows do not produce unexpected results when processing them.
 
 ## Environment Setup
 
