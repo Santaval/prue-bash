@@ -2,6 +2,7 @@
 
 ## Description
 
+This is a solution integrating UI, API, and a Machine Learning model using PostgreSQL through Supabase. This will be used to evaluate the testing practices of the team.
 
 ## Team Members
 
