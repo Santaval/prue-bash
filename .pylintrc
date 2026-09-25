@@ -1,0 +1,12 @@
+# Configuracion minima de pylint.
+#
+# Los dos limites que se suben existen por la misma razon: un ModelSpec es una
+# declaracion, y declarar un modelo requiere nombrar sus 8 campos (nombre,
+# entradas, nombres de entradas, constructor, datos, epochs, semilla y
+# descripcion). Partirlo en objetos mas chicos solo para bajar la cuenta haria
+# el registro mas dificil de leer, que es justo lo contrario de lo que se
+# busca: que agregar un modelo sea un solo bloque legible.
+
+[DESIGN]
+max-args = 8
+max-attributes = 8

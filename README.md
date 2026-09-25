@@ -63,24 +63,30 @@ The repository is organized as a monorepo: two runnable applications (`api`, `tr
    (see *Pending work* below), this is done with `PYTHONPATH`:
    ```bash
    # Linux/macOS
-   export PYTHONPATH="packages/model/src:apps/api/src"
+   export PYTHONPATH="packages/model/src:apps/api/src:apps/trainer/src"
 
    # Windows (PowerShell)
-   $env:PYTHONPATH = "packages/model/src;apps/api/src"
+   $env:PYTHONPATH = "packages/model/src;apps/api/src;apps/trainer/src"
    ```
    On Windows the separator is `;` even inside Git Bash — using `:` there fails
    with `ModuleNotFoundError: No module named 'prue_model'`.
+
+   Running `pytest` needs none of this: `pytest.ini` declares the same three
+   source roots.
 
 ## Running the Project
 
 All commands are run from the repository root.
 
-Train the model (writes `apps/trainer/dist/math.keras`):
+Train the models (writes one `.keras` artifact per model into `MODELS_DIR`,
+by default `apps/trainer/dist/`):
 ```bash
-python apps/trainer/src/trainer/train.py
+python -m trainer --all
+python -m trainer --model climate          # just one
+python -m trainer --all --models-dir /tmp  # somewhere else
 ```
 
-Serve the API (requires the artifact above and `MODEL_PATH`):
+Serve the API (requires every model's artifact and `MODELS_DIR`):
 ```bash
 uvicorn api.main:app --reload --app-dir apps/api/src
 ```
@@ -92,7 +98,8 @@ python apps/api/src/api/db.py
 
 Run tests:
 ```bash
-pytest
+pytest                # everything
+pytest -m "not slow"  # skips the tests that train a model
 ```
 
 Run static code analysis:
@@ -109,26 +116,37 @@ prue-bash/
 ├── requirements.txt       # Project dependencies
 ├── .example.env           # Environment variables template (without real values)
 │
+├── pytest.ini             # Test config: source roots, markers
+├── conftest.py            # Shared fixtures
+│
 ├── apps/
-│   ├── api/               # FastAPI service exposing POST /predict
+│   ├── api/               # FastAPI service: GET /models, POST /predict/{name}
 │   │   ├── src/api/
 │   │   │   ├── main.py    # Application wiring and routes
 │   │   │   ├── schemas.py # Request/response models
-│   │   │   ├── deps.py    # Model loading (path from MODEL_PATH)
+│   │   │   ├── deps.py    # Loads every registered model from MODELS_DIR
 │   │   │   └── db.py      # Supabase client
 │   │   └── tests/         # Unit and integration tests for the API
 │   │
-│   ├── trainer/           # Training job
-│   │   ├── src/trainer/train.py
-│   │   └── dist/          # Build output: math.keras (git-ignored)
+│   ├── trainer/           # Training job, driven by the registry
+│   │   ├── src/trainer/
+│   │   │   ├── __main__.py  # python -m trainer
+│   │   │   ├── cli.py       # --model NAME | --all | --models-dir PATH
+│   │   │   └── train.py     # train_spec(), train_all()
+│   │   ├── dist/          # Build output: one .keras per model (git-ignored)
+│   │   └── tests/
 │   │
 │   └── ui/                # Vite + React front-end (not started yet)
 │
 ├── packages/
-│   └── model/             # Shared library: architecture + inference contract
+│   └── model/             # Shared library: registry + architecture + inference
 │       ├── src/prue_model/
-│       │   ├── architecture.py  # build_model() — no training side effects
-│       │   └── inference.py     # load_model(), predict()
+│       │   ├── registry.py      # ModelSpec, register(), get_spec()
+│       │   ├── architecture.py  # build_dense_regressor() — no side effects
+│       │   ├── inference.py     # load_model(), to_batch(), predict()
+│       │   ├── artifacts.py     # MODELS_DIR resolution
+│       │   ├── errors.py        # Domain exceptions
+│       │   └── models/          # One file per model: math.py, climate.py
 │       └── tests/
 │
 ├── tests/e2e/             # Cross-application workflow tests
@@ -138,21 +156,91 @@ prue-bash/
 
 ### Why the model lives in `packages/`
 
-Both the trainer and the API need to agree on the model's input shape. Keeping
-`build_model()` and `predict()` in a shared library means that contract is
-declared in exactly one place (`INPUT_FEATURES`), instead of being duplicated
-between the training script and the request handler. It also makes the
-architecture importable without triggering a training run, which is what allows
-it to be unit tested.
+Both the trainer and the API need to agree on each model's input shape. That
+contract is declared exactly once per model, in its `ModelSpec`
+(`input_features` and `feature_names`), and `to_batch()` in `inference.py` is
+the single place that enforces it — so the trainer and the request handler
+cannot drift apart by construction rather than by convention. The same library
+also owns artifact-path resolution, so the two sides cannot disagree about
+where a `.keras` file lives either.
 
-`apps/trainer/dist/math.keras` is a build artifact, not source. It is
+Specs are plain declarations with no side effects, so the architecture stays
+importable without triggering a training run, which is what allows it to be
+unit tested.
+
+`apps/trainer/dist/*.keras` are build artifacts, not source. They are
 git-ignored and regenerated by the training job.
+
+### Adding a model
+
+Adding a model is adding **one file**. Nothing else in the repository changes —
+not the trainer, not the API, not the environment.
+
+Create `packages/model/src/prue_model/models/<name>.py`:
+
+```python
+"""Modelo 'climate': estima la sensacion termica a partir de 3 variables."""
+
+import numpy as np
+from keras.models import Sequential
+
+from ..architecture import build_dense_regressor
+from ..registry import register
+
+
+def dataset() -> tuple[np.ndarray, np.ndarray]:
+    """Datos de entrenamiento. Se llama despues de fijar la semilla."""
+    rng = np.random.default_rng(7)
+    features = rng.uniform(0.0, 1.0, size=(256, 3))
+    return features, features @ np.array([2.0, -1.5, 0.5]) + 0.25
+
+
+@register(
+    name="climate",
+    input_features=3,
+    feature_names=("temperature_c", "humidity", "wind_kph"),
+    dataset=dataset,
+    epochs=300,
+    seed=42,
+    description="Sensacion termica normalizada a partir de 3 variables",
+)
+def build() -> Sequential:
+    """Construye la arquitectura de 'climate'."""
+    return build_dense_regressor(3)
+```
+
+Then train it:
+
+```bash
+python -m trainer --model climate
+```
+
+`models/__init__.py` imports every sibling module on import, so the model
+appears in `GET /models`, becomes servable at `POST /predict/climate`, is
+picked up by `python -m trainer --all`, and is covered automatically by the
+parametrized tests in `test_registry.py` and `test_reproducibility.py`.
+
+Two things to watch when writing a spec:
+
+- **Normalize the inputs.** `sgd` at its default learning rate diverges to
+  `NaN` on real-scale values (temperature in °C, wind in km/h). Either scale
+  the features, as above, or pass `optimizer="adam"` to
+  `build_dense_regressor()`.
+- **Use a private RNG in `dataset()`** (`np.random.default_rng(...)`), never
+  the module-level `np.random.*` functions. The trainer resets the global seed
+  before each model, so module-level randomness would make your data depend on
+  the training order.
 
 ### Reproducibility of the training job
 
 The trainer sets a fixed seed, so **the trained weights are identical across
 runs** — verified as bit-identical (`2.0 / -0.99` for `y = 2x - 1`). This matters
 because caching a training step is only safe if the step is deterministic.
+
+The seed is declared per model and re-applied immediately before that model is
+built, because weight initialization consumes the RNG too. That is what makes
+`python -m trainer --all` produce exactly the same weights as training each
+model on its own: the result does not depend on the training order.
 
 The `.keras` **file bytes are not stable**, however: the format is a zip archive
 carrying variable metadata, so two runs with identical weights still produce
