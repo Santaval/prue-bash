@@ -16,11 +16,21 @@ Dataset = tuple[np.ndarray, np.ndarray]
 
 
 @dataclass(frozen=True)
-class ModelSpec:
+class ModelSpec:  # pylint: disable=too-many-instance-attributes
     """Declaracion completa de un modelo: arquitectura, datos y entrenamiento.
 
-    El contrato de forma de entrada vive aqui (`input_features`), en un unico
-    lugar por modelo, y lo consumen tanto el entrenador como la API.
+    Son muchos atributos a proposito: es un contenedor de declaraciones, no una
+    clase con comportamiento. Partirlo dispersaria en dos archivos lo que un
+    modelo declara de si mismo.
+
+    Los dos contratos del modelo viven aqui, en un unico lugar por modelo, y
+    los consumen tanto el entrenador como la API: el de entrada
+    (`input_features`) y el de salida (`class_names`).
+
+    `class_names` vacio significa regresion. Con dos nombres el modelo es un
+    clasificador binario y con tres o mas, multiclase; de ahi se derivan `task`
+    y `output_units` en vez de declararlos por separado, para que no puedan
+    contradecirse entre si.
     """
 
     name: str
@@ -31,6 +41,7 @@ class ModelSpec:
     epochs: int
     seed: int = 42
     description: str = ""
+    class_names: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         """Valida el spec al construirlo, es decir al importar el modulo."""
@@ -43,6 +54,28 @@ class ModelSpec:
             )
         if self.epochs < 1:
             raise ValueError(f"epochs debe ser >= 1 en '{self.name}'.")
+        if len(self.class_names) == 1:
+            raise ValueError(
+                f"'{self.name}' declara una sola clase. Usa cero nombres para "
+                "una regresion o dos o mas para una clasificacion."
+            )
+        if len(set(self.class_names)) != len(self.class_names):
+            raise ValueError(
+                f"'{self.name}' repite nombres de clase: cada uno es una llave "
+                "del diccionario de probabilidades y una colision perderia una."
+            )
+
+    @property
+    def task(self) -> str:
+        """Tarea del modelo, derivada de cuantas clases declara."""
+        if not self.class_names:
+            return "regression"
+        return "binary" if len(self.class_names) == 2 else "multiclass"
+
+    @property
+    def output_units(self) -> int:
+        """Unidades que debe tener la capa de salida de `build`."""
+        return 1 if self.task in ("regression", "binary") else len(self.class_names)
 
 
 _REGISTRY: dict[str, ModelSpec] = {}
@@ -59,6 +92,7 @@ def register(
     epochs: int,
     seed: int = 42,
     description: str = "",
+    class_names: Sequence[str] = (),
 ) -> Callable[[BuildFn], BuildFn]:
     """Decorador que registra la funcion decorada como constructor del modelo.
 
@@ -78,6 +112,7 @@ def register(
             epochs=epochs,
             seed=seed,
             description=description,
+            class_names=tuple(class_names),
         )
         return build
 

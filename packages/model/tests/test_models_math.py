@@ -40,4 +40,4 @@ def test_trained_weights_match_the_documented_values(trained):
 
 def test_prediction_follows_the_learned_relation(trained):
     """Para x = 10 la relacion aprendida da ~19."""
-    assert predict(trained, [10.0], SPEC) == pytest.approx(19.0, abs=0.1)
+    assert predict(trained, [10.0], SPEC).value == pytest.approx(19.0, abs=0.1)

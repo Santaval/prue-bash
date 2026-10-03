@@ -41,6 +41,18 @@ def fixture_client(trained_models_dir, monkeypatch):
         yield test_client
 
 
+class _ConstantModel:
+    """Doble de prueba que siempre devuelve la misma fila de salida."""
+
+    def __init__(self, row):
+        self._row = np.array([row], dtype=float)
+
+    def predict(self, batch, verbose=0):  # pylint: disable=unused-argument
+        """Imita keras.Model.predict devolviendo un array (1, n)."""
+        del batch
+        return self._row
+
+
 @pytest.fixture(name="fake_model")
 def fixture_fake_model():
     """Doble de prueba con .predict, para validar sin cargar Keras."""
@@ -53,3 +65,15 @@ def fixture_fake_model():
             return np.array([[float(np.asarray(batch).sum())]])
 
     return _FakeModel()
+
+
+@pytest.fixture(name="fake_binary_model")
+def fixture_fake_binary_model():
+    """Clasificador binario falso: una sigmoide que ya decidio 0.8."""
+    return _ConstantModel([0.8])
+
+
+@pytest.fixture(name="fake_multiclass_model")
+def fixture_fake_multiclass_model():
+    """Clasificador multiclase falso: softmax con la clase 1 ganando."""
+    return _ConstantModel([0.1, 0.7, 0.2])

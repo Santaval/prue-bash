@@ -78,3 +78,18 @@ def test_unloaded_model_is_a_503():
     response = TestClient(app).post("/predict/math", json={"features": [1.0]})
     assert response.status_code == 503
     assert "no esta cargado" in response.json()["detail"]
+
+
+def test_models_declares_the_output_contract(client):
+    """GET /models dice como leer una prediccion antes de pedirla."""
+    body = {entry["name"]: entry for entry in client.get("/models").json()}
+    for entry in body.values():
+        assert entry["task"] == "regression"
+        assert entry["class_names"] == []
+
+
+def test_regression_response_omits_the_classifier_fields(client):
+    """Los campos de clasificacion viajan en null cuando no aplican."""
+    body = client.post("/predict/math", json={"features": [10.0]}).json()
+    assert body["label"] is None
+    assert body["probabilities"] is None

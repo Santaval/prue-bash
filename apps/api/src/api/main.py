@@ -44,6 +44,8 @@ def get_models() -> list[ModelInfo]:
             feature_names=list(spec.feature_names),
             description=spec.description,
             loaded=spec.name in _state,
+            task=spec.task,
+            class_names=list(spec.class_names),
         )
         for spec in list_specs()
     ]
@@ -66,8 +68,14 @@ def post_predict(name: str, data: PredictRequest) -> PredictResponse:
         )
 
     try:
-        value = predict(model, data.features, spec)
+        result = predict(model, data.features, spec)
     except InvalidFeaturesError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    return PredictResponse(model=name, input=data.features, prediction=value)
+    return PredictResponse(
+        model=name,
+        input=data.features,
+        prediction=result.value,
+        label=result.label,
+        probabilities=result.probabilities,
+    )

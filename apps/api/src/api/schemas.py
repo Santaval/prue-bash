@@ -10,18 +10,32 @@ class PredictRequest(BaseModel):
 
 
 class PredictResponse(BaseModel):
-    """Respuesta de POST /predict/{name}."""
+    """Respuesta de POST /predict/{name}.
+
+    `prediction` siempre viene: es el valor estimado en una regresion, la
+    probabilidad de la clase positiva en un binario y el indice de la clase
+    ganadora en un multiclase. Los dos campos restantes solo los llenan los
+    clasificadores; en una regresion quedan en null.
+    """
 
     model: str
     input: list[float]
     prediction: float
+    label: str | None = None
+    probabilities: dict[str, float] | None = None
 
 
 class ModelInfo(BaseModel):
-    """Entrada de GET /models."""
+    """Entrada de GET /models.
+
+    Incluye `task` y `class_names` para que un cliente sepa como leer una
+    prediccion antes de pedirla.
+    """
 
     name: str
     input_features: int
     feature_names: list[str]
     description: str
     loaded: bool
+    task: str
+    class_names: list[str]

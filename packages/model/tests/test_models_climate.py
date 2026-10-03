@@ -58,4 +58,6 @@ def test_prediction_over_three_features(trained):
     """El camino multi-entrada funciona de punta a punta en la libreria."""
     features = [0.5, 0.5, 0.5]
     expected = float(np.dot(features, TRUE_WEIGHTS) + TRUE_BIAS)
-    assert predict(trained, features, SPEC) == pytest.approx(expected, abs=0.15)
+    result = predict(trained, features, SPEC)
+    assert result.value == pytest.approx(expected, abs=0.15)
+    assert result.label is None and result.probabilities is None

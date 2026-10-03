@@ -23,3 +23,11 @@ class InvalidFeaturesError(PrueModelError, ValueError):
 
 class ArtifactNotFoundError(PrueModelError, FileNotFoundError):
     """Falta el archivo .keras de un modelo registrado."""
+
+
+class OutputShapeError(PrueModelError):
+    """La salida del modelo no coincide con la que declara su spec.
+
+    Pasa cuando se carga un artefacto viejo contra un spec ya actualizado.
+    Mejor un error explicito que un IndexError a media interpretacion.
+    """

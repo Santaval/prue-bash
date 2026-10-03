@@ -142,7 +142,7 @@ prue-bash/
 │   └── model/             # Shared library: registry + architecture + inference
 │       ├── src/prue_model/
 │       │   ├── registry.py      # ModelSpec, register(), get_spec()
-│       │   ├── architecture.py  # build_dense_regressor() — no side effects
+│       │   ├── architecture.py  # build_dense_regressor/classifier()
 │       │   ├── inference.py     # load_model(), to_batch(), predict()
 │       │   ├── artifacts.py     # MODELS_DIR resolution
 │       │   ├── errors.py        # Domain exceptions
@@ -163,6 +163,14 @@ the single place that enforces it — so the trainer and the request handler
 cannot drift apart by construction rather than by convention. The same library
 also owns artifact-path resolution, so the two sides cannot disagree about
 where a `.keras` file lives either.
+
+The **output** contract lives in the same spec. A model declares `class_names`,
+and its task follows from that: empty means regression, two names mean binary
+classification, three or more mean multiclass. `ModelSpec.task` and
+`ModelSpec.output_units` are derived rather than declared, so the head the
+trainer builds and the way the API reads a prediction cannot contradict each
+other — `interpret()` in `inference.py` is the one place that turns a raw
+output tensor into a value, a label and a probability per class.
 
 Specs are plain declarations with no side effects, so the architecture stays
 importable without triggering a training run, which is what allows it to be
@@ -219,6 +227,31 @@ python -m trainer --model climate
 appears in `GET /models`, becomes servable at `POST /predict/climate`, is
 picked up by `python -m trainer --all`, and is covered automatically by the
 parametrized tests in `test_registry.py` and `test_reproducibility.py`.
+
+For a classifier, declare `class_names` and build the matching head. The
+targets in `dataset()` are integer class indices (`0`, `1`, `2`, ...), which
+line up positionally with `class_names`:
+
+```python
+@register(
+    name="comfort",
+    input_features=3,
+    feature_names=("temperature_c", "humidity", "wind_kph"),
+    dataset=dataset,
+    epochs=300,
+    class_names=("cold", "comfortable", "hot"),
+    description="Clasifica la sensacion termica en tres niveles",
+)
+def build() -> Sequential:
+    """Construye la arquitectura de 'comfort'."""
+    return build_dense_classifier(3, classes=3)
+```
+
+`POST /predict/comfort` then answers with the winning class index in
+`prediction`, its name in `label`, and a probability per class in
+`probabilities`. A regression leaves the last two `null`. `GET /models` reports
+each model's `task` and `class_names`, so a client knows which shape to expect
+before it asks.
 
 Two things to watch when writing a spec:
 

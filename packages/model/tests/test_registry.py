@@ -108,6 +108,33 @@ def test_spec_rejects_feature_name_mismatch():
         _spec(input_features=2, feature_names=("a",))
 
 
+def test_spec_rejects_a_single_class():
+    """Una sola clase no es ni regresion ni clasificacion."""
+    with pytest.raises(ValueError, match="una sola clase"):
+        _spec(class_names=("spam",))
+
+
+def test_spec_rejects_duplicate_class_names():
+    """Los nombres son llaves del diccionario de probabilidades: sin colisiones."""
+    with pytest.raises(ValueError, match="repite nombres de clase"):
+        _spec(class_names=("a", "b", "a"))
+
+
+@pytest.mark.parametrize(
+    ("class_names", "task", "units"),
+    [
+        ((), "regression", 1),
+        (("no", "si"), "binary", 1),
+        (("baja", "media", "alta"), "multiclass", 3),
+    ],
+)
+def test_task_and_output_units_derive_from_class_names(class_names, task, units):
+    """El contrato de salida se deriva, no se declara dos veces."""
+    spec = _spec(class_names=class_names)
+    assert spec.task == task
+    assert spec.output_units == units
+
+
 def test_spec_is_frozen():
     """Un spec es una declaracion: no se muta."""
     with pytest.raises(dataclasses.FrozenInstanceError):
@@ -119,7 +146,7 @@ def test_every_spec_builds_its_declared_shape(spec):
     """Contrato que cubre gratis a todo modelo futuro."""
     model = spec.build()
     assert model.input_shape == (None, spec.input_features)
-    assert model.output_shape == (None, 1)
+    assert model.output_shape == (None, spec.output_units)
 
 
 @pytest.mark.parametrize("spec", list_specs(), ids=lambda spec: spec.name)
