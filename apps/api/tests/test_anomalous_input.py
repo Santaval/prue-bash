@@ -13,16 +13,16 @@ pytestmark = pytest.mark.slow
 @pytest.mark.parametrize(
     ("name", "body", "reason"),
     [
-        ("math", {}, "falta el campo features"),
-        ("math", {"features": []}, "lista vacia"),
-        ("math", {"features": [1.0, 2.0]}, "sobran entradas"),
-        ("climate", {"features": [1.0]}, "faltan entradas"),
-        ("math", {"features": "abc"}, "string en vez de lista"),
-        ("math", {"features": [None]}, "null como entrada"),
-        ("math", {"features": ["x"]}, "texto como entrada"),
-        ("math", {"features": [[1.0]]}, "lista anidada"),
-        ("math", {"features": {"x": 1.0}}, "objeto en vez de lista"),
-        ("math", {"x": 1.0}, "contrato viejo: regresion del cambio rompedor"),
+        ("linear", {}, "falta el campo features"),
+        ("linear", {"features": []}, "lista vacia"),
+        ("linear", {"features": [1.0, 2.0]}, "sobran entradas"),
+        ("plane", {"features": [1.0]}, "faltan entradas"),
+        ("linear", {"features": "abc"}, "string en vez de lista"),
+        ("linear", {"features": [None]}, "null como entrada"),
+        ("linear", {"features": ["x"]}, "texto como entrada"),
+        ("linear", {"features": [[1.0]]}, "lista anidada"),
+        ("linear", {"features": {"x": 1.0}}, "objeto en vez de lista"),
+        ("linear", {"x": 1.0}, "contrato viejo: regresion del cambio rompedor"),
     ],
 )
 def test_malformed_bodies_are_rejected(client, name, body, reason):
@@ -35,7 +35,7 @@ def test_malformed_bodies_are_rejected(client, name, body, reason):
 def test_non_finite_numbers_never_produce_a_prediction(client, literal):
     """Pydantic acepta NaN e Infinity: el guardia esta en to_batch."""
     response = client.post(
-        "/predict/math",
+        "/predict/linear",
         content=f'{{"features": [{literal}]}}',
         headers={"content-type": "application/json"},
     )
@@ -45,13 +45,13 @@ def test_non_finite_numbers_never_produce_a_prediction(client, literal):
 
 def test_absurdly_long_vector_is_rejected_by_length(client):
     """Se rechaza por cantidad, antes de construir ningun tensor."""
-    response = client.post("/predict/math", json={"features": [1.0] * 10_000})
+    response = client.post("/predict/linear", json={"features": [1.0] * 10_000})
     assert response.status_code == 422
     assert "espera 1 entradas" in response.text
 
 
 def test_wrong_count_names_the_expected_features(client):
     """El 422 dice cuantas y cuales entradas se esperaban."""
-    response = client.post("/predict/climate", json={"features": [0.1, 0.2]})
+    response = client.post("/predict/plane", json={"features": [0.1, 0.2]})
     assert response.status_code == 422
-    assert "temperature_c" in response.json()["detail"]
+    assert "(a, b, c)" in response.json()["detail"]

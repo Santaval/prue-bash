@@ -45,6 +45,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
 
+    if not specs:
+        print(
+            "No hay modelos registrados: nada que entrenar. "
+            "Ver docs/adding-a-model.md para agregar uno."
+        )
+        return 0
+
     for spec in specs:
         destination = train_spec(spec, base)
         print(f"Modelo '{spec.name}' guardado en {destination}")

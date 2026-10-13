@@ -16,7 +16,7 @@ pytestmark = pytest.mark.slow
 
 def test_training_twice_yields_identical_weights(tmp_path):
     """Misma semilla, mismos pesos."""
-    spec = get_spec("math")
+    spec = get_spec("linear")
     first = load_model(train_spec(spec, tmp_path / "a")).get_weights()
     second = load_model(train_spec(spec, tmp_path / "b")).get_weights()
 

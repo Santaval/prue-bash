@@ -1,6 +1,7 @@
 """Pruebas del registro de modelos."""
 
 import dataclasses
+import sys
 
 import numpy as np
 import pytest
@@ -61,7 +62,7 @@ def test_get_spec_unknown_lists_available_names():
         get_spec("no-existe")
     message = str(excinfo.value)
     assert "no-existe" in message
-    assert "math" in message and "climate" in message
+    assert "linear" in message and "plane" in message
 
 
 def test_get_spec_message_has_no_stray_quotes():
@@ -79,13 +80,54 @@ def test_list_specs_is_sorted_and_immutable():
     assert list_names() == tuple(sorted(list_names()))
 
 
-def test_autoload_registers_every_model_file():
-    """Un `import prue_model` pelado basta para que el registro este lleno.
+_MODEL_FILE = """
+import numpy as np
+from prue_model.architecture import build_dense_regressor
+from prue_model.registry import register
+
+
+@register(name="{name}", input_features=1, feature_names=("x",),
+          dataset=lambda: (np.zeros((2, 1)), np.zeros(2)), epochs=1)
+def build():
+    return build_dense_regressor(1)
+"""
+
+
+@pytest.fixture(name="models_on_disk")
+def fixture_models_on_disk(registry_snapshot, monkeypatch, tmp_path):
+    """Agrega tmp_path al paquete `models` y limpia lo que se importe de ahi."""
+    from prue_model import models  # pylint: disable=import-outside-toplevel
+
+    monkeypatch.setattr(models, "__path__", [str(tmp_path)])
+    monkeypatch.setattr(models, "__all__", [])
+    yield models, tmp_path
+    for module in ("autoloaded", "_draft"):
+        sys.modules.pop(f"{models.__name__}.{module}", None)
+    assert registry_snapshot is not None
+
+
+def test_autoload_registers_every_model_file(models_on_disk):
+    """Un archivo nuevo en `models/` basta para que el modelo quede registrado.
 
     Esta es la prueba de que "agregar un modelo = agregar un archivo".
     """
-    assert "math" in list_names()
-    assert "climate" in list_names()
+    models, folder = models_on_disk
+    (folder / "autoloaded.py").write_text(_MODEL_FILE.format(name="autoloaded"))
+
+    models._autoload()  # pylint: disable=protected-access
+
+    assert "autoloaded" in list_names()
+    assert "autoloaded" in models.__all__
+
+
+def test_autoload_skips_underscore_modules(models_on_disk):
+    """Un modelo a medio escribir se esconde con un "_" al inicio del nombre."""
+    models, folder = models_on_disk
+    (folder / "_draft.py").write_text(_MODEL_FILE.format(name="draft"))
+
+    models._autoload()  # pylint: disable=protected-access
+
+    assert "draft" not in list_names()
 
 
 @pytest.mark.parametrize(

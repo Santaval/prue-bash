@@ -35,11 +35,11 @@ def test_configured_value_is_used(monkeypatch, tmp_path):
 
 def test_artifact_path_is_name_dot_keras(tmp_path):
     """Comparacion como Path, nunca como string: separadores de Windows."""
-    spec = get_spec("climate")
-    assert artifact_path(spec, tmp_path) == tmp_path / "climate.keras"
+    spec = get_spec("plane")
+    assert artifact_path(spec, tmp_path) == tmp_path / "plane.keras"
 
 
 def test_artifact_path_uses_the_environment_when_no_base(monkeypatch, tmp_path):
     """Sin base explicita cae en MODELS_DIR."""
     monkeypatch.setenv("MODELS_DIR", str(tmp_path))
-    assert artifact_path(get_spec("math")) == tmp_path / "math.keras"
+    assert artifact_path(get_spec("linear")) == tmp_path / "linear.keras"

@@ -3,8 +3,53 @@
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
-from prue_model import registry
+from prue_model import build_dense_regressor, registry
 from trainer.train import train_all
+
+# --- Modelos de prueba ------------------------------------------------------
+#
+# El paquete `prue_model.models` no trae modelos de produccion, pero la API, el
+# entrenador y las pruebas e2e necesitan un registro con algo adentro. Estos
+# dos se registran al cargar este conftest, es decir ANTES de recolectar las
+# pruebas, asi que tambien los ven los `parametrize` sobre `list_specs()`.
+#
+# Cubren los dos caminos de entrada: una sola variable y varias. Sus objetivos
+# no tienen ruido, asi que las pruebas pueden afirmar los coeficientes.
+
+LINEAR_W, LINEAR_B = 2.0, -1.0
+PLANE_W, PLANE_B = (2.0, -1.5, 0.5), 0.25
+
+
+def _linear_dataset() -> tuple[np.ndarray, np.ndarray]:
+    """y = 2x - 1 sobre seis puntos fijos."""
+    features = np.array([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0])
+    return features, LINEAR_W * features + LINEAR_B
+
+
+def _plane_dataset() -> tuple[np.ndarray, np.ndarray]:
+    """y = 2a - 1.5b + 0.5c + 0.25 con entradas normalizadas en [0, 1)."""
+    rng = np.random.default_rng(7)
+    features = rng.uniform(0.0, 1.0, size=(256, 3))
+    return features, features @ np.array(PLANE_W) + PLANE_B
+
+
+registry.register(
+    name="linear",
+    input_features=1,
+    feature_names=("x",),
+    dataset=_linear_dataset,
+    epochs=500,
+    description="Modelo de prueba: y = 2x - 1",
+)(lambda: build_dense_regressor(1))
+
+registry.register(
+    name="plane",
+    input_features=3,
+    feature_names=("a", "b", "c"),
+    dataset=_plane_dataset,
+    epochs=300,
+    description="Modelo de prueba: y = 2a - 1.5b + 0.5c + 0.25",
+)(lambda: build_dense_regressor(3))
 
 
 @pytest.fixture(name="registry_snapshot")
