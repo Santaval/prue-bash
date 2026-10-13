@@ -35,9 +35,9 @@ repository — only `.example.env` with empty values.
 
 `MODELS_DIR` is a **directory**, not a file path. Every registered model
 resolves to `<MODELS_DIR>/<name>.keras`, so adding a model requires no change
-here at all — that is the whole reason it is a directory. Registering
-`climate` is enough for the API to start looking for
-`apps/trainer/dist/climate.keras`.
+here at all — that is the whole reason it is a directory. Registering a
+model named `exam_score` is enough for the API to start looking for
+`apps/trainer/dist/exam_score.keras`.
 
 The API refuses to start if `MODELS_DIR` is unset, and the trainer must have run
 at least once so the files exist. This is deliberate: the path used to be
