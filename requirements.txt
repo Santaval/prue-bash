@@ -30,6 +30,8 @@ idna==3.19
 iniconfig==2.3.0
 isort==9.0.1
 joblib==1.6.0
+openpyxl==3.1.5
+pandas==2.3.3
 keras-nightly==3.16.0.dev2026092404
 libclang==18.1.1
 markdown-it-py==4.2.0
