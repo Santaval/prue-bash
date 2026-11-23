@@ -59,6 +59,12 @@ La plantilla `.example.env` incluye valores locales de referencia.
 
 El entorno Python requiere las dependencias declaradas en `requirements.txt`.
 
+Para servir únicamente M07, la API puede iniciar con
+`API_MODELS=diabetes`; así no requiere artefactos de modelos de otros temas.
+El artefacto `apps/trainer/dist/diabetes.keras` debe existir para ejecutar
+predicciones. `API_SKIP_MODEL_LOADING=true` sirve solo para probar rutas y
+validaciones, pues deja las solicitudes válidas sin modelo y responden 503.
+
 ## Operación
 
 Detener el servicio sin eliminar los datos persistidos:

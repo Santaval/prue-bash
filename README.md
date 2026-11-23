@@ -89,10 +89,10 @@ python -m trainer --model <name>           # just one
 python -m trainer --all --models-dir /tmp  # somewhere else
 ```
 
-Serve the API (normal mode requires every registered model artifact and
-`MODELS_DIR`):
+Serve the API (normal mode requires the selected model artifacts and
+`MODELS_DIR`; `.example.env` selects `diabetes`):
 ```bash
-uvicorn api.main:app --reload --app-dir apps/api/src
+API_MODELS=diabetes uvicorn api.main:app --reload --app-dir apps/api/src
 ```
 
 To start the API for UI/request-contract work without model artifacts (valid

@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from prue_model import (InvalidFeaturesError, ModelNotFoundError, get_spec,
                         list_specs, predict)
 
-from .deps import load_all_models
+from .deps import load_models
 from .persistence import save_prediction
 from .schemas import (DiabetesPredictRequest, ModelInfo, PredictRequest,
                       PredictResponse)
@@ -21,7 +21,11 @@ async def lifespan(_app: FastAPI):
     """Carga modelos al iniciar, salvo que se active el modo sin modelos."""
     skip_model_loading = os.getenv("API_SKIP_MODEL_LOADING", "false").lower()
     if skip_model_loading not in {"1", "true", "yes", "on"}:
-        _state.update(load_all_models())
+        selected = os.getenv("API_MODELS", "").strip()
+        model_names = tuple(
+            name.strip() for name in selected.split(",") if name.strip()
+        )
+        _state.update(load_models(model_names or None))
     yield
     _state.clear()
 

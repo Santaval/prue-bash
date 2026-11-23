@@ -31,6 +31,7 @@ repository — only `.example.env` with empty values.
 | `SUPABASE_KEY` | `api`   | Server-side service role key used for inserts; never expose it in the UI. |
 | `MODELS_DIR`   | `api`, `trainer` | Directory holding the trained `.keras` artifacts, one per model |
 | `API_SKIP_MODEL_LOADING` | `api` | Optional test switch. Set to `true` to start the API without loading model artifacts; valid prediction requests then return 503. Defaults to `false`. |
+| `API_MODELS` | `api` | Optional comma-separated model names to load. Defaults to all registered models; use `diabetes` to serve M07 independently. |
 | `PERSISTENCE_BACKEND` | `api` | `supabase` (default) or `postgres` for direct PostgreSQL connection. |
 | `DATABASE_URL` | `api` | PostgreSQL connection URL; required only when `PERSISTENCE_BACKEND=postgres`. |
 
@@ -49,9 +50,9 @@ whenever a file moved. Passing it as configuration means the dependency between
 the API and the training output is explicit — and once Turborepo is wired up, it
 can guarantee the directory is populated before the API starts.
 
-The API also refuses to start if *any* registered model's artifact is missing,
-and it reports every missing name at once rather than one per restart. A
-service that only fails on one route is worse than one that will not boot.
+The API refuses to start if an artifact selected by `API_MODELS` is missing,
+and reports all missing selected artifacts together. When the variable is unset,
+all registered models are selected.
 
 The trainer is more forgiving: when `MODELS_DIR` is unset it falls back to
 `apps/trainer/dist` so a fresh clone can train without configuring anything.
