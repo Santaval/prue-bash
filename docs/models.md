@@ -276,22 +276,24 @@ models inside the trainer.
 
 ## The API
 
-`apps/api` (FastAPI). On startup, `lifespan` calls `deps.load_all_models()`,
-which:
+`apps/api` (FastAPI). On startup, `lifespan` calls `deps.load_models()` using
+the optional `API_MODELS` comma-separated list. If unset, all registered models
+are selected. For the M07 project, `API_MODELS=diabetes` loads only the diabetes
+artifact. The loader:
 
 1. requires `MODELS_DIR`
-2. checks that **every** registered model has an artifact, and reports all
-   missing names in a single error
-3. loads them all into memory
+2. checks that every selected model has an artifact, and reports all missing
+   selected names in a single error
+3. loads the selected models into memory
 
-It is all-or-nothing on purpose: a service where one route silently answers
-503 is worse than one that refuses to boot.
+Loading is all-or-nothing for the selected model set.
 
 | Route                    | Description |
 |--------------------------|-------------|
 | `GET /`                  | Health check. |
 | `GET /models`            | Every registered model: `name`, `input_features`, `feature_names`, `description`, `loaded`, `task`, `class_names`. |
 | `POST /predict/{name}`   | Body `{"features": [...]}`. Returns `model`, `input`, `prediction`, `label`, `probabilities`. |
+| `POST /predict/diabetes` | M07 named fields: `gender`, `age`, `hypertension`, `heart_disease`, `smoking_history`, `bmi`, `HbA1c_level`, `blood_glucose_level`. Persists the run and returns prediction, probabilities, `execution_id`, and `created_at`. |
 
 Status codes for `POST /predict/{name}`:
 
@@ -301,6 +303,43 @@ Status codes for `POST /predict/{name}`:
 | 404  | `name` is not registered (checked first; the detail lists available names). |
 | 422  | Body is malformed or violates the input contract. |
 | 503  | The model is registered but not loaded (only happens if lifespan did not run). |
+
+### M07 request example
+
+The categorical values are translated to the integer codes used by the
+training data. This sample produced `diabetes` with probability `0.9965` using
+the locally trained artifact; retraining or changing the artifact can change
+the result. This is a machine-learning output, not a medical diagnosis.
+
+```json
+{
+  "gender": "Female",
+  "age": 65,
+  "hypertension": 1,
+  "heart_disease": 1,
+  "smoking_history": "current",
+  "bmi": 35,
+  "HbA1c_level": 8,
+  "blood_glucose_level": 240
+}
+```
+
+The response also contains a generated execution ID and timestamp:
+
+```json
+{
+  "model": "diabetes",
+  "input": [0.0, 65.0, 1.0, 1.0, 1.0, 35.0, 8.0, 240.0],
+  "prediction": 0.9965,
+  "label": "diabetes",
+  "probabilities": {
+    "no_diabetes": 0.0035,
+    "diabetes": 0.9965
+  },
+  "execution_id": "<uuid>",
+  "created_at": "<timestamp>"
+}
+```
 
 ## Reproducibility
 
