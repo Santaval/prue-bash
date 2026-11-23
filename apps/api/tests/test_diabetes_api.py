@@ -93,3 +93,21 @@ def test_diabetes_schema_rejects_missing_field(fake_diabetes_api):
     with pytest.raises(ValidationError):
         DiabetesPredictRequest(**request)
     assert saved_records == []
+
+
+def test_diabetes_handler_returns_503_when_persistence_fails(
+    fake_diabetes_api, monkeypatch
+):
+    main, _ = fake_diabetes_api
+
+    def fail_to_save(_record):
+        raise RuntimeError("No se pudo persistir la predicción en PostgreSQL.")
+
+    monkeypatch.setattr(main, "save_prediction", fail_to_save)
+    request = main.DiabetesPredictRequest(**_valid_request())
+
+    with pytest.raises(main.HTTPException) as error:
+        main.post_predict_diabetes(request)
+
+    assert error.value.status_code == 503
+    assert error.value.detail == "No se pudo persistir la predicción en PostgreSQL."
