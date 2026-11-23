@@ -21,6 +21,17 @@ Abre <http://localhost:5173>. La URL de la API (por defecto
 `http://127.0.0.1:8000`) se cambia desde la cabecera y se guarda en
 `localStorage`.
 
+## Pruebas
+
+Sin dependencias, con el test runner de Node (22 o superior):
+
+```bash
+node --test apps/ui/tests/*.test.mjs
+```
+
+Cubren el cliente HTTP (`api.js`), la lógica pura de formularios y el
+renderizado con un DOM simulado. No hay pruebas de navegador real.
+
 ## CORS
 
 La API solo acepta los orígenes de `API_CORS_ORIGINS` (por defecto
