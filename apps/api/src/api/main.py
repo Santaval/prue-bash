@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import keras
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from prue_model import (InvalidFeaturesError, ModelNotFoundError, get_spec,
                         list_specs, predict)
 
@@ -14,6 +15,14 @@ from .schemas import (DiabetesPredictRequest, ModelInfo, PredictRequest,
                       PredictResponse)
 
 _state: dict[str, keras.Model] = {}
+
+_DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+
+
+def _cors_origins() -> list[str]:
+    """Origenes permitidos por CORS, leidos de `API_CORS_ORIGINS`."""
+    raw = os.getenv("API_CORS_ORIGINS", _DEFAULT_CORS_ORIGINS)
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
 @asynccontextmanager
@@ -34,6 +43,13 @@ app = FastAPI(
     title="API de Inferencia",
     description="Endpoints HTTP para predecir con los modelos registrados",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins(),
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
 
 

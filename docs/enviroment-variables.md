@@ -34,6 +34,7 @@ repository — only `.example.env` with empty values.
 | `API_MODELS` | `api` | Optional comma-separated model names to load. Defaults to all registered models; use `diabetes` to serve M07 independently. |
 | `PERSISTENCE_BACKEND` | `api` | `supabase` (default) or `postgres` for direct PostgreSQL connection. |
 | `DATABASE_URL` | `api` | PostgreSQL connection URL; required only when `PERSISTENCE_BACKEND=postgres`. |
+| `API_CORS_ORIGINS` | `api` | Optional comma-separated list of browser origins allowed by CORS (the UI origin). Defaults to `http://localhost:5173,http://127.0.0.1:5173`. |
 
 ## About `MODELS_DIR`
 
