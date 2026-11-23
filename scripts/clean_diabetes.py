@@ -37,6 +37,17 @@ NUMERIC_COLUMNS = [
     "diabetes",
 ]
 CATEGORICAL_COLUMNS = ["gender", "smoking_history"]
+CATEGORY_CODES = {
+    "gender": {"Female": 0, "Male": 1, "Other": 2},
+    "smoking_history": {
+        "No Info": 0,
+        "current": 1,
+        "ever": 2,
+        "former": 3,
+        "never": 4,
+        "not current": 5,
+    },
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -82,15 +93,22 @@ def clean(data: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, object]]:
     invalid_numeric = (
         data[["age", "bmi", "HbA1c_level", "blood_glucose_level"]] < 0
     ).any(axis=1)
-    invalid_rows = invalid_target | invalid_numeric | data.isna().any(axis=1)
+    invalid_category = pd.Series(False, index=data.index)
+    for column, codes in CATEGORY_CODES.items():
+        invalid_category |= ~data[column].isin(codes)
+    invalid_rows = (
+        invalid_target
+        | invalid_numeric
+        | invalid_category
+        | data.isna().any(axis=1)
+    )
     invalid_count = int(invalid_rows.sum())
     data = data.loc[~invalid_rows].reset_index(drop=True)
 
-    # Codificación estable para que entrenamiento e inferencia compartan el
-    # mismo contrato: categorías conocidas quedan como enteros y desconocidas
-    # pueden tratarse como -1 en una futura validación del API.
+    # La codificación se declara fija para que coincida con el contrato de
+    # inferencia y no dependa de las categorías presentes en cada archivo.
     for column in CATEGORICAL_COLUMNS:
-        data[column] = pd.Categorical(data[column]).codes
+        data[column] = data[column].map(CATEGORY_CODES[column])
 
     report = {
         "original_rows": original_rows,
