@@ -106,6 +106,9 @@ Verify the Supabase connection:
 python apps/api/src/api/db.py
 ```
 
+For local PostgreSQL in Podman, see [docs/postgres-local.md](docs/postgres-local.md).
+Choose the backend with `PERSISTENCE_BACKEND=postgres`; Supabase remains the default.
+
 Run tests:
 ```bash
 pytest                # everything
