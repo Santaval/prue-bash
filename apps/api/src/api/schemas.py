@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -65,7 +66,7 @@ class PredictResponse(BaseModel):
     prediction: float
     label: str | None = None
     probabilities: dict[str, float] | None = None
-    execution_id: str | None = None
+    execution_id: UUID | None = None
     created_at: datetime | None = None
 
 
