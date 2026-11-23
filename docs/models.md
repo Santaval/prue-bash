@@ -324,6 +324,15 @@ the result. This is a machine-learning output, not a medical diagnosis.
 }
 ```
 
+For a repeatable holdout evaluation, run:
+
+```bash
+PYTHONPATH=packages/model/src python scripts/evaluate_diabetes.py
+```
+
+The generated report includes accuracy, precision, recall, F1, ROC-AUC, and the
+confusion matrix.
+
 The response also contains a generated execution ID and timestamp:
 
 ```json
