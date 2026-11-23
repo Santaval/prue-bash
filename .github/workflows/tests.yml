@@ -38,3 +38,17 @@ jobs:
       # (they train real models).
       - name: Run tests
         run: pytest -v
+
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 detects ES modules in .js files without a package.json.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run UI tests
+        run: node --test apps/ui/tests/*.test.mjs
