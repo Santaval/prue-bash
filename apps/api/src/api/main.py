@@ -1,5 +1,6 @@
 """Aplicacion FastAPI para servir predicciones de varios modelos."""
 
+import os
 from contextlib import asynccontextmanager
 
 import keras
@@ -16,8 +17,10 @@ _state: dict[str, keras.Model] = {}
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Carga todos los modelos una sola vez al arrancar el servidor."""
-    _state.update(load_all_models())
+    """Carga modelos al iniciar, salvo que se active el modo sin modelos."""
+    skip_model_loading = os.getenv("API_SKIP_MODEL_LOADING", "false").lower()
+    if skip_model_loading not in {"1", "true", "yes", "on"}:
+        _state.update(load_all_models())
     yield
     _state.clear()
 

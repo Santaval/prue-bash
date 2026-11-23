@@ -89,9 +89,16 @@ python -m trainer --model <name>           # just one
 python -m trainer --all --models-dir /tmp  # somewhere else
 ```
 
-Serve the API (requires every model's artifact and `MODELS_DIR`):
+Serve the API (normal mode requires every registered model artifact and
+`MODELS_DIR`):
 ```bash
 uvicorn api.main:app --reload --app-dir apps/api/src
+```
+
+To start the API for UI/request-contract work without model artifacts (valid
+prediction requests return 503 until a model is loaded):
+```bash
+API_SKIP_MODEL_LOADING=true PYTHONPATH="packages/model/src:apps/api/src" uvicorn api.main:app --reload --app-dir apps/api/src
 ```
 
 Verify the Supabase connection:

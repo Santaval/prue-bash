@@ -30,6 +30,7 @@ repository — only `.example.env` with empty values.
 | `SUPABASE_URL` | `api`   | URL of the Supabase project                         |
 | `SUPABASE_KEY` | `api`   | Supabase API key (anon or service role)             |
 | `MODELS_DIR`   | `api`, `trainer` | Directory holding the trained `.keras` artifacts, one per model |
+| `API_SKIP_MODEL_LOADING` | `api` | Optional test switch. Set to `true` to start the API without loading model artifacts; valid prediction requests then return 503. Defaults to `false`. |
 
 ## About `MODELS_DIR`
 
@@ -58,6 +59,14 @@ explicit `--models-dir`).
 
 Because it is a path and not a secret, `MODELS_DIR` is safe to commit in
 `.example.env`.
+
+## Starting the API without model artifacts
+
+For UI or request-contract development, set `API_SKIP_MODEL_LOADING=true` before
+starting the API. The server starts without `MODELS_DIR` artifacts, so routes
+and request validation can be exercised. Valid prediction requests return 503
+because no model is loaded; invalid request bodies still return 422. Leave this
+flag unset or set it to `false` for normal inference.
 
 ## Notes
 
