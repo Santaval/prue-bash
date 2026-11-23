@@ -109,6 +109,18 @@ python apps/api/src/api/db.py
 For local PostgreSQL in Podman, see [docs/postgres-local.md](docs/postgres-local.md).
 Choose the backend with `PERSISTENCE_BACKEND=postgres`; Supabase remains the default.
 
+### Running the UI
+
+The web interface in `apps/ui` is plain HTML/CSS/JS (no build step). Start the
+API (see above), then serve the UI from another terminal:
+```bash
+python -m http.server 5173 -d apps/ui
+```
+Open <http://localhost:5173>. The API base URL defaults to
+`http://127.0.0.1:8000` and can be changed from the page header. If you serve
+the UI from a different origin, add it to `API_CORS_ORIGINS`. See
+[apps/ui/README.md](apps/ui/README.md).
+
 Run tests:
 ```bash
 pytest                # everything
