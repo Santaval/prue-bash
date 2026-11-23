@@ -1,0 +1,57 @@
+# Despliegue completo (UI + API + PostgreSQL), pensado para Coolify
+# (build pack "Docker Compose"). Ver docs/deploy-coolify.md.
+#
+# Solo "ui" se publica: Coolify le asigna el dominio mediante SERVICE_FQDN_UI_80.
+# La API y la base de datos quedan en la red interna; la UI llega a la API
+# por /api, que nginx reenvía al servicio "api".
+services:
+  ui:
+    build:
+      context: .
+      dockerfile: docker/ui/Dockerfile
+    environment:
+      - SERVICE_FQDN_UI_80
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+      args:
+        TRAIN_ARGS: ${TRAIN_ARGS:---all}
+    environment:
+      API_MODELS: ${API_MODELS:-diabetes,academic_risk,loan_amount}
+      API_SKIP_MODEL_LOADING: ${API_SKIP_MODEL_LOADING:-false}
+      PERSISTENCE_BACKEND: ${PERSISTENCE_BACKEND:-postgres}
+      DATABASE_URL: postgresql://${SERVICE_USER_POSTGRES:-prue}:${SERVICE_PASSWORD_POSTGRES:-local_only_password}@postgres:5432/${POSTGRES_DB:-prue}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_KEY: ${SUPABASE_KEY:-}
+      API_CORS_ORIGINS: ${API_CORS_ORIGINS:-}
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    environment:
+      POSTGRES_USER: ${SERVICE_USER_POSTGRES:-prue}
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:-local_only_password}
+      POSTGRES_DB: ${POSTGRES_DB:-prue}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

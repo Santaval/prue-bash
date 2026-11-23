@@ -121,6 +121,12 @@ Open <http://localhost:5173>. The API base URL defaults to
 the UI from a different origin, add it to `API_CORS_ORIGINS`. See
 [apps/ui/README.md](apps/ui/README.md).
 
+### Deploying with Docker
+
+`docker-compose.yaml` builds and runs the UI, the API (with the models trained
+during the image build) and PostgreSQL. It is ready for Coolify; see
+[docs/deploy-coolify.md](docs/deploy-coolify.md).
+
 Run tests:
 ```bash
 pytest                # everything

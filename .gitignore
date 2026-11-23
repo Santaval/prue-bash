@@ -9,3 +9,4 @@ dist
 # Generated datasets and cleaning reports
 data/processed/
 data/reports/
+/graphify-out
