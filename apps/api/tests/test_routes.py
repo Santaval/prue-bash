@@ -2,7 +2,7 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from prue_model import list_names
+from prue_model import get_spec, list_names
 
 pytestmark = pytest.mark.slow
 
@@ -79,9 +79,14 @@ def test_unloaded_model_is_a_503():
 def test_models_declares_the_output_contract(client):
     """GET /models dice como leer una prediccion antes de pedirla."""
     body = {entry["name"]: entry for entry in client.get("/models").json()}
-    for entry in body.values():
-        assert entry["task"] == "regression"
-        assert entry["class_names"] == []
+    assert set(body) == set(list_names())
+    for name, entry in body.items():
+        spec = get_spec(name)
+        assert entry["task"] == spec.task
+        assert entry["class_names"] == list(spec.class_names)
+    # Los modelos de regresion no declaran clases.
+    assert body["linear"]["task"] == "regression"
+    assert body["linear"]["class_names"] == []
 
 
 def test_regression_response_omits_the_classifier_fields(client):
