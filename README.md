@@ -123,8 +123,8 @@ the UI from a different origin, add it to `API_CORS_ORIGINS`. See
 
 ### Deploying with Docker
 
-`docker-compose.yaml` builds and runs the UI, the API (with the models trained
-during the image build) and PostgreSQL. It is ready for Coolify; see
+`docker-compose.yaml` builds and runs the UI and the API (with the models
+trained during the image build); predictions are stored in Supabase. It is ready for Coolify; see
 [docs/deploy-coolify.md](docs/deploy-coolify.md).
 
 Run tests:
