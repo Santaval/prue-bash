@@ -1,5 +1,6 @@
 """Aplicacion FastAPI para servir predicciones de varios modelos."""
 
+import os
 from contextlib import asynccontextmanager
 
 import keras
@@ -7,16 +8,24 @@ from fastapi import FastAPI, HTTPException
 from prue_model import (InvalidFeaturesError, ModelNotFoundError, get_spec,
                         list_specs, predict)
 
-from .deps import load_all_models
-from .schemas import ModelInfo, PredictRequest, PredictResponse
+from .deps import load_models
+from .persistence import save_prediction
+from .schemas import (DiabetesPredictRequest, ModelInfo, PredictRequest,
+                      PredictResponse)
 
 _state: dict[str, keras.Model] = {}
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Carga todos los modelos una sola vez al arrancar el servidor."""
-    _state.update(load_all_models())
+    """Carga modelos al iniciar, salvo que se active el modo sin modelos."""
+    skip_model_loading = os.getenv("API_SKIP_MODEL_LOADING", "false").lower()
+    if skip_model_loading not in {"1", "true", "yes", "on"}:
+        selected = os.getenv("API_MODELS", "").strip()
+        model_names = tuple(
+            name.strip() for name in selected.split(",") if name.strip()
+        )
+        _state.update(load_models(model_names or None))
     yield
     _state.clear()
 
@@ -49,6 +58,44 @@ def get_models() -> list[ModelInfo]:
         )
         for spec in list_specs()
     ]
+
+
+@app.post("/predict/diabetes", response_model=PredictResponse)
+def post_predict_diabetes(data: DiabetesPredictRequest) -> PredictResponse:
+    """Predice M07 con un contrato de campos nombrados y categorías legibles."""
+    model = _state.get("diabetes")
+    if model is None:
+        raise HTTPException(
+            status_code=503, detail="El modelo 'diabetes' no esta cargado."
+        )
+
+    spec = get_spec("diabetes")
+    features = data.to_features()
+    try:
+        result = predict(model, features, spec)
+    except InvalidFeaturesError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    try:
+        saved = save_prediction({
+            "model": "diabetes",
+            "input_data": data.model_dump(),
+            "prediction": result.value,
+            "label": result.label,
+            "probabilities": result.probabilities,
+        })
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return PredictResponse(
+        model="diabetes",
+        input=features,
+        prediction=result.value,
+        label=result.label,
+        probabilities=result.probabilities,
+        execution_id=saved.get("id"),
+        created_at=saved.get("created_at"),
+    )
 
 
 @app.post("/predict/{name}", response_model=PredictResponse)

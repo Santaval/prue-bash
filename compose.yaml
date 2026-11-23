@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-prue}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_only_password}
+      POSTGRES_DB: ${POSTGRES_DB:-prue}
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docs/sql/prediction_runs.sql:/docker-entrypoint-initdb.d/01-prediction_runs.sql:ro,Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-prue} -d ${POSTGRES_DB:-prue}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
