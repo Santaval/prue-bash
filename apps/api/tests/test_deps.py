@@ -32,7 +32,7 @@ def test_reports_every_missing_artifact_at_once(monkeypatch, tmp_path):
     message = str(excinfo.value)
     for name in list_names():
         assert name in message
-    assert "python -m trainer --all" in message
+    assert "Entrena primero" in message
 
 
 def test_refuses_when_only_one_artifact_is_missing(monkeypatch, tmp_path):
