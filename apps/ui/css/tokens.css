@@ -1,0 +1,133 @@
+/* Design tokens: paleta "Paper" inspirada en cojeev UI, recreada a mano. */
+:root {
+  --font-display: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
+  --font-text: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px;
+  --s-7: 28px; --s-8: 32px; --s-10: 40px; --s-12: 48px; --s-16: 64px;
+
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-card-sm: 16px; --r-card: 20px;
+  --r-panel: 24px; --r-pill: 999px;
+
+  --fs-caps: 11px; --fs-meta: 12px; --fs-small: 13px; --fs-control: 14px;
+  --fs-body: 15px; --fs-lead: 17px; --fs-title: 21px; --fs-section: 26px;
+  --fs-display: 44px;
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700;
+  --lh-body: 1.45; --ls-display: -0.015em; --ls-caps: 0.06em;
+
+  --ctl-sm: 32px; --ctl-md: 40px; --ctl-lg: 48px;
+
+  --enter: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-micro: 140ms;
+  --t-base: 220ms;
+
+  color-scheme: light;
+  --v-canvas: #f8f6f1;
+  --v-paper: #ffffff;
+  --v-beige: #eee9e1;
+  --v-beige-2: #f3efe8;
+  --v-text: #26282d;
+  --v-text-2: #464951;
+  --v-text-3: #52565e;
+  --v-structure: #14171b;
+  --v-on-structure: #f8f6f1;
+  --v-border: #b4b0ab;
+  --v-edge: #706e6d;
+  --v-brand: #845c73;
+
+  --v-pink: #f0a4cc;   --v-pink-deep: #c9709f;   --v-pink-soft: #fbe9f3;
+  --v-olive: #a8bc75;  --v-olive-deep: #6f8438;  --v-olive-soft: #eef3dd;
+  --v-blue: #95bae8;   --v-blue-deep: #4a78b3;   --v-blue-soft: #e4eefb;
+  --v-yellow: #f1d369; --v-yellow-deep: #a58411; --v-yellow-soft: #fbf3d2;
+
+  --v-danger: #d7473c; --v-danger-fill: #b92d28; --v-danger-ink: #b2433b;
+  --v-danger-soft: #fbe6e3;
+
+  --v-ok-bg: #e3ecc9;      --v-ok-ink: #44571a;
+  --v-warn-bg: #f8e9a8;    --v-warn-ink: #6e5508;
+  --v-danger-bg: #f7d6d2;  --v-danger-bg-ink: #8f221d;
+  --v-info-bg: #d6e5f9;    --v-info-ink: #274f86;
+  --v-pending-bg: #e6e1d8; --v-pending-ink: #4b4e55;
+
+  --v-sel-bg: #fbe9f3;
+  --v-primary-bg: var(--v-structure);
+  --v-primary-ink: #f8f6f1;
+  --v-primary-hover: #2b3037;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --v-canvas: #15171a;
+  --v-paper: #20242a;
+  --v-beige: #292f37;
+  --v-beige-2: #252a31;
+  --v-text: #f3f4f4;
+  --v-text-2: #bdc1c5;
+  --v-text-3: #a4a9af;
+  --v-structure: #f3f4f4;
+  --v-on-structure: #15171a;
+  --v-border: #4e5359;
+  --v-edge: #8c9094;
+  --v-brand: #f0a4cc;
+
+  --v-pink-deep: #f0a4cc;   --v-pink-soft: #3b2a35;
+  --v-olive-deep: #bfd38a;  --v-olive-soft: #2c3322;
+  --v-blue-deep: #a9c8f0;   --v-blue-soft: #25303f;
+  --v-yellow-deep: #f1d369; --v-yellow-soft: #3a3320;
+
+  --v-danger-ink: #f28b82;
+  --v-danger-soft: #3d2423;
+
+  --v-ok-bg: #2f3a1c;      --v-ok-ink: #cde29a;
+  --v-warn-bg: #3d3412;    --v-warn-ink: #f1d369;
+  --v-danger-bg: #442523;  --v-danger-bg-ink: #f6a9a3;
+  --v-info-bg: #25344a;    --v-info-ink: #b7d2f3;
+  --v-pending-bg: #323840; --v-pending-ink: #bdc1c5;
+
+  --v-sel-bg: #3b2a35;
+  --v-primary-bg: #f0a4cc;
+  --v-primary-ink: #15171a;
+  --v-primary-hover: #f5b8d8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --v-canvas: #15171a;
+    --v-paper: #20242a;
+    --v-beige: #292f37;
+    --v-beige-2: #252a31;
+    --v-text: #f3f4f4;
+    --v-text-2: #bdc1c5;
+    --v-text-3: #a4a9af;
+    --v-structure: #f3f4f4;
+    --v-on-structure: #15171a;
+    --v-border: #4e5359;
+    --v-edge: #8c9094;
+    --v-brand: #f0a4cc;
+
+    --v-pink-deep: #f0a4cc;   --v-pink-soft: #3b2a35;
+    --v-olive-deep: #bfd38a;  --v-olive-soft: #2c3322;
+    --v-blue-deep: #a9c8f0;   --v-blue-soft: #25303f;
+    --v-yellow-deep: #f1d369; --v-yellow-soft: #3a3320;
+
+    --v-danger-ink: #f28b82;
+    --v-danger-soft: #3d2423;
+
+    --v-ok-bg: #2f3a1c;      --v-ok-ink: #cde29a;
+    --v-warn-bg: #3d3412;    --v-warn-ink: #f1d369;
+    --v-danger-bg: #442523;  --v-danger-bg-ink: #f6a9a3;
+    --v-info-bg: #25344a;    --v-info-ink: #b7d2f3;
+    --v-pending-bg: #323840; --v-pending-ink: #bdc1c5;
+
+    --v-sel-bg: #3b2a35;
+    --v-primary-bg: #f0a4cc;
+    --v-primary-ink: #15171a;
+    --v-primary-hover: #f5b8d8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-micro: 0ms; --t-base: 0ms; }
+}

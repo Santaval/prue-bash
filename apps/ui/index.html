@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prue | Predicciones</title>
+  <meta name="description" content="Interfaz web para consultar modelos y ejecutar predicciones.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=DM+Sans:ital,opsz,wght@0,9..40,400..700&display=swap">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+
+  <header class="app-header">
+    <div class="app-header__inner">
+      <span class="wordmark"><span class="wordmark__dot" aria-hidden="true"></span>Prue</span>
+      <div class="header-tools">
+        <span id="api-status" class="v-badge" role="status" aria-live="polite">Conectando...</span>
+        <form id="api-form" class="api-url">
+          <label class="sr-only" for="api-base">URL de la API</label>
+          <input id="api-base" class="v-input" type="url" inputmode="url" autocomplete="off" spellcheck="false">
+          <button class="v-btn v-btn--outline v-btn--sm" type="submit">Conectar</button>
+        </form>
+        <button id="theme-toggle" class="v-btn v-btn--ghost v-btn--sm" type="button" aria-pressed="false">Modo oscuro</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="app-main">
+    <section class="hero">
+      <span class="t-caps">Modelos de inferencia</span>
+      <h1 class="t-display">Predicciones, sin complicaciones.</h1>
+      <p class="t-lead">Elige un modelo, completa los datos y obtén una predicción en segundos.</p>
+    </section>
+
+    <div class="layout">
+      <aside class="stack" aria-labelledby="models-title">
+        <div class="row row--between">
+          <h2 id="models-title" class="t-title">Modelos</h2>
+          <button id="refresh" class="v-btn v-btn--ghost v-btn--sm" type="button">Actualizar</button>
+        </div>
+        <div id="model-list" class="model-list"></div>
+      </aside>
+
+      <section class="stack-lg" aria-labelledby="ws-title">
+        <div id="workspace-empty" class="empty">Selecciona un modelo para comenzar.</div>
+
+        <div id="workspace" class="stack-lg" hidden>
+          <div class="v-card">
+            <div class="workspace-head">
+              <span class="v-card__eyebrow" id="ws-task"></span>
+              <h2 id="ws-title" class="t-section"></h2>
+              <p id="ws-desc" class="t-lead"></p>
+              <p id="ws-hint" class="t-small"></p>
+            </div>
+            <div id="load-warning" class="v-alert v-alert--warn" hidden>
+              <p class="v-alert__title">Modelo no cargado</p>
+              <p class="v-alert__body">El servidor no tiene este modelo en memoria. Podrás enviar datos, pero la API responderá con un error 503.</p>
+            </div>
+            <form id="predict-form" class="stack" novalidate>
+              <div id="form-fields"></div>
+              <div class="row">
+                <button id="submit" class="v-btn v-btn--accent v-btn--lg" type="submit">Predecir</button>
+                <button id="sample" class="v-btn v-btn--outline" type="button">Valores de ejemplo</button>
+                <button id="clear" class="v-btn v-btn--ghost" type="button">Limpiar</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="result" aria-live="polite"></div>
+        </div>
+
+        <div class="stack">
+          <div class="row row--between">
+            <h2 class="t-title">Historial</h2>
+            <button id="clear-history" class="v-btn v-btn--ghost v-btn--sm" type="button">Borrar</button>
+          </div>
+          <div id="history"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer">Las predicciones son orientativas y no sustituyen una evaluación profesional.</footer>
+  <div id="toasts" class="v-toast-region" role="status" aria-live="polite"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
