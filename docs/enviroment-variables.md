@@ -28,9 +28,11 @@ repository — only `.example.env` with empty values.
 | Variable       | Used by | Description                                         |
 |----------------|---------|-----------------------------------------------------|
 | `SUPABASE_URL` | `api`   | URL of the Supabase project                         |
-| `SUPABASE_KEY` | `api`   | Supabase API key (anon or service role)             |
+| `SUPABASE_KEY` | `api`   | Server-side service role key used for inserts; never expose it in the UI. |
 | `MODELS_DIR`   | `api`, `trainer` | Directory holding the trained `.keras` artifacts, one per model |
 | `API_SKIP_MODEL_LOADING` | `api` | Optional test switch. Set to `true` to start the API without loading model artifacts; valid prediction requests then return 503. Defaults to `false`. |
+| `PERSISTENCE_BACKEND` | `api` | `supabase` (default) or `postgres` for direct PostgreSQL connection. |
+| `DATABASE_URL` | `api` | PostgreSQL connection URL; required only when `PERSISTENCE_BACKEND=postgres`. |
 
 ## About `MODELS_DIR`
 
@@ -67,6 +69,18 @@ starting the API. The server starts without `MODELS_DIR` artifacts, so routes
 and request validation can be exercised. Valid prediction requests return 503
 because no model is loaded; invalid request bodies still return 422. Leave this
 flag unset or set it to `false` for normal inference.
+
+## Persisting diabetes predictions
+
+Run [`sql/prediction_runs.sql`](sql/prediction_runs.sql) in the Supabase SQL
+Editor to create the table and enable row-level security. Configure
+`SUPABASE_URL` and the server-side `SUPABASE_KEY` in the API environment. The
+M07 endpoint returns 503 if it cannot persist a prediction. The key belongs
+only on the API server, never in browser code.
+
+For local PostgreSQL, use `PERSISTENCE_BACKEND=postgres` and set
+`DATABASE_URL`. The Supabase backend remains the default and is selected when
+the flag is unset or set to `supabase`.
 
 ## Notes
 

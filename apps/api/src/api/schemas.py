@@ -1,5 +1,6 @@
 """Esquemas de entrada y salida de la API."""
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -64,6 +65,8 @@ class PredictResponse(BaseModel):
     prediction: float
     label: str | None = None
     probabilities: dict[str, float] | None = None
+    execution_id: str | None = None
+    created_at: datetime | None = None
 
 
 class ModelInfo(BaseModel):

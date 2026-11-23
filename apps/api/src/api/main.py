@@ -9,6 +9,7 @@ from prue_model import (InvalidFeaturesError, ModelNotFoundError, get_spec,
                         list_specs, predict)
 
 from .deps import load_all_models
+from .persistence import save_prediction
 from .schemas import (DiabetesPredictRequest, ModelInfo, PredictRequest,
                       PredictResponse)
 
@@ -71,12 +72,25 @@ def post_predict_diabetes(data: DiabetesPredictRequest) -> PredictResponse:
     except InvalidFeaturesError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+    try:
+        saved = save_prediction({
+            "model": "diabetes",
+            "input_data": data.model_dump(),
+            "prediction": result.value,
+            "label": result.label,
+            "probabilities": result.probabilities,
+        })
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
     return PredictResponse(
         model="diabetes",
         input=features,
         prediction=result.value,
         label=result.label,
         probabilities=result.probabilities,
+        execution_id=saved.get("id"),
+        created_at=saved.get("created_at"),
     )
 
 
