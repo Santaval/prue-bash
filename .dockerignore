@@ -1,0 +1,13 @@
+.git
+.venv
+**/__pycache__
+.pytest_cache
+.env
+*.env
+!.example.env
+node_modules
+graphify-out
+evidence
+apps/trainer/dist
+data/processed
+data/reports

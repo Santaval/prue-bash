@@ -1,6 +1,11 @@
 // Cliente HTTP de la API de inferencia.
 const KEY = "prue.apiBase";
-export const DEFAULT_BASE = "http://127.0.0.1:8000";
+// En desarrollo (UI en :5173) la API corre aparte en :8000. Desplegada con
+// Docker, nginx sirve la UI y reenvía /api al contenedor de la API.
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+export const DEFAULT_BASE = LOCAL_HOSTS.has(location.hostname) && location.port === "5173"
+  ? "http://127.0.0.1:8000"
+  : `${location.origin}/api`;
 
 export class ApiError extends Error {
   constructor(message, { status = 0, network = false } = {}) {

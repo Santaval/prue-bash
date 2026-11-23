@@ -170,6 +170,7 @@ function init() {
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme(load(THEME_KEY)));
   $("theme-toggle").addEventListener("click", toggleTheme);
 
+  $("api-base").placeholder = api.DEFAULT_BASE;
   $("api-base").value = api.getBase();
   $("api-form").addEventListener("submit", (e) => {
     e.preventDefault();
