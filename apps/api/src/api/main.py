@@ -8,7 +8,8 @@ from prue_model import (InvalidFeaturesError, ModelNotFoundError, get_spec,
                         list_specs, predict)
 
 from .deps import load_all_models
-from .schemas import ModelInfo, PredictRequest, PredictResponse
+from .schemas import (DiabetesPredictRequest, ModelInfo, PredictRequest,
+                      PredictResponse)
 
 _state: dict[str, keras.Model] = {}
 
@@ -49,6 +50,31 @@ def get_models() -> list[ModelInfo]:
         )
         for spec in list_specs()
     ]
+
+
+@app.post("/predict/diabetes", response_model=PredictResponse)
+def post_predict_diabetes(data: DiabetesPredictRequest) -> PredictResponse:
+    """Predice M07 con un contrato de campos nombrados y categorías legibles."""
+    model = _state.get("diabetes")
+    if model is None:
+        raise HTTPException(
+            status_code=503, detail="El modelo 'diabetes' no esta cargado."
+        )
+
+    spec = get_spec("diabetes")
+    features = data.to_features()
+    try:
+        result = predict(model, features, spec)
+    except InvalidFeaturesError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return PredictResponse(
+        model="diabetes",
+        input=features,
+        prediction=result.value,
+        label=result.label,
+        probabilities=result.probabilities,
+    )
 
 
 @app.post("/predict/{name}", response_model=PredictResponse)
