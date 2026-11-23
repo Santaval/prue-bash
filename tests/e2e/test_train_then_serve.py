@@ -4,6 +4,8 @@ Es la unica prueba que ejercita entrenador + registro + artefactos + API
 juntos, o sea justo lo que el monorepo existe para mantener sincronizado.
 """
 
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 from prue_model import list_names
@@ -38,7 +40,7 @@ def test_train_then_serve(tmp_path, monkeypatch):
     from api.main import app
 
     # La ruta de diabetes guarda cada ejecucion; aqui no hay base de datos.
-    monkeypatch.setattr(main, "save_prediction", lambda row: {"id": "e2e"})
+    monkeypatch.setattr(main, "save_prediction", lambda row: {"id": str(uuid.uuid4())})
 
     with TestClient(app) as client:
         catalogue = client.get("/models").json()
